@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block body %}
+<h1>Users ({{ items|length }})</h1>
+<form class="bar" method="get"><input name="q" placeholder="Phone or name" value="{{ request.args.q or '' }}">
+<label><input type="checkbox" name="verified" value="1" {{ 'checked' if request.args.verified }}> Verified only</label>
+<select name="ward"><option value="">All wards</option>{% for w in wards %}<option value="{{ w.id }}" {{ 'selected' if request.args.ward==w.id|string }}>Ward {{ w.id }}</option>{% endfor %}</select>
+<button>Filter</button> <a class="btn" href="{{ url_for('admin.export',what='users') }}">Export CSV</a></form>
+<div class="wrap"><table><tr><th>Name</th><th>Ward</th><th>Phone</th><th>Street</th><th>Voter ID</th><th>Problems</th><th>Requests</th><th>Joined</th><th></th></tr>
+{% for u in items %}<tr><td>{{ u.name or '—' }}{% if u.is_verified %} ✅{% endif %}{% if u.is_blocked %} <span class="pill rejected">blocked</span>{% endif %}</td>
+<td>{{ u.ward_id }}</td><td>{{ u.phone }}</td><td>{{ u.street }}</td><td>{{ u.voter_id or '—' }}</td><td>{{ ic.get(u.id,0) }}</td><td>{{ sc.get(u.id,0) }}</td>
+<td>{{ u.created_at.strftime('%d %b %y') }}</td>
+<td><form class="inline" method="post"><button class="ghost" formaction="{{ url_for('admin.user_verify',uid=u.id) }}">{{ 'Unverify' if u.is_verified else 'Mark verified' }}</button>
+<button class="ghost" formaction="{{ url_for('admin.user_block',uid=u.id) }}">{{ 'Unblock' if u.is_blocked else 'Block' }}</button></form></td></tr>{% endfor %}</table></div>{% endblock %}

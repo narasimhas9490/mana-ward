@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% block body %}
+<h1>Services &amp; problem categories</h1>
+<div class="two">
+<div class="card"><h2>Services residents can request</h2>
+{% for s in services %}<div class="row"><span style="{{ 'opacity:.4' if not s.active }}">{{ s.icon }} {{ s.name }}</span>
+<form method="post" action="{{ url_for('admin.service_toggle',sid=s.id) }}"><button class="ghost">{{ 'Hide' if s.active else 'Show' }}</button></form></div>{% endfor %}
+<form method="post" class="inline" style="margin-top:10px"><input type="hidden" name="kind" value="service">
+<input name="icon" placeholder="🙂" size="3"><input name="name" placeholder="New service" required><input name="description" placeholder="Short description"><button>Add</button></form></div>
+<div class="card"><h2>Problem categories</h2>
+{% for c in cats %}<div class="row"><span>{{ c.icon }} {{ c.name }}</span></div>{% endfor %}
+<form method="post" class="inline" style="margin-top:10px"><input type="hidden" name="kind" value="category">
+<input name="icon" placeholder="🙂" size="3"><input name="name" placeholder="New category" required><button>Add</button></form></div>
+<div class="card" style="grid-column:1/-1"><h2>Wards (B.Kothakota Nagar Panchayat): set the villages/areas in each ward</h2>
+{% for w in wards %}<form method="post" class="inline" style="margin-bottom:6px"><input type="hidden" name="kind" value="ward"><input type="hidden" name="ward_id" value="{{ w.id }}">
+<b style="width:70px;padding-top:6px">Ward {{ w.id }}</b><input name="areas" value="{{ w.areas }}" placeholder="e.g. Village A, Village B" size="50"><button class="ghost">Save</button></form>{% endfor %}</div>
+</div>{% endblock %}

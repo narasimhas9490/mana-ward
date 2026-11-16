@@ -1,0 +1,25 @@
+{
+  "name": "my-ward",
+  "version": "1.0.0",
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android"
+  },
+  "dependencies": {
+    "@expo-google-fonts/anek-telugu": "^0.4.1",
+    "@expo-google-fonts/pacifico": "^0.4.1",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "expo": "^58.0.25",
+    "expo-asset": "~58.0.21",
+    "expo-build-properties": "~58.0.12",
+    "expo-font": "^58.0.12",
+    "expo-image-picker": "~58.0.10",
+    "expo-linear-gradient": "^58.0.4",
+    "expo-status-bar": "~58.0.5",
+    "phosphor-react-native": "^3.0.6",
+    "react": "19.3.0",
+    "react-native": "0.88.1",
+    "react-native-svg": "^15.16.0"
+  }
+}

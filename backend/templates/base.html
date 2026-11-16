@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ward Admin</title>
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--ink:#1c2733;--mute:#6b7785;--line:#e2e7ec;--pri:#0b6e4f;--warn:#b7791f;--bad:#c0392b}
+@media(prefers-color-scheme:dark){:root{--bg:#10151a;--card:#1a2129;--ink:#e8edf2;--mute:#93a0ad;--line:#2b3540;--pri:#35b58a}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,Segoe UI,sans-serif}
+nav{background:var(--pri);color:#fff;display:flex;gap:4px;align-items:center;padding:0 16px;flex-wrap:wrap}
+nav b{margin-right:16px;padding:12px 0}nav a{color:#fff;text-decoration:none;padding:12px 12px;opacity:.85}nav a:hover{opacity:1;background:#0003}
+nav .sp{flex:1}main{max-width:1200px;margin:0 auto;padding:20px 16px}
+h1{font-size:20px;margin:0 0 14px}h2{font-size:15px;margin:0 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+.stat b{display:block;font-size:26px}.stat span{color:var(--mute)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--mute);font-weight:600;font-size:12px;text-transform:uppercase}
+.wrap{overflow-x:auto}
+input,select,textarea,button{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink)}
+button,.btn{background:var(--pri);color:#fff;border:0;cursor:pointer;text-decoration:none;display:inline-block;padding:6px 12px;border-radius:6px}
+button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}button.bad{background:var(--bad)}
+.pill{padding:2px 8px;border-radius:99px;font-size:12px;background:var(--line)}
+.open,.submitted{background:#fdecc8;color:#7a4b00}.in_progress{background:#d6e9ff;color:#0a4a8a}
+.resolved,.completed,.ok{background:#d3f2e3;color:#0b5b3a}.rejected{background:#f8d7d3;color:#8a1f13}
+.flash{background:#d3f2e3;color:#0b5b3a;padding:8px 12px;border-radius:8px;margin-bottom:12px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}.mute{color:var(--mute)}
+.row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--line)}
+form.inline{display:flex;gap:6px;flex-wrap:wrap}a{color:var(--pri)}
+</style></head><body>
+{% if session.admin %}<nav><b>🏛️ Mana Ward Admin</b>
+<a href="{{ url_for('admin.dashboard') }}">Dashboard</a><a href="{{ url_for('admin.issues') }}">Problems</a>
+<a href="{{ url_for('admin.requests_') }}">Service Requests</a><a href="{{ url_for('admin.users') }}">Users</a>
+<a href="{{ url_for('admin.voters') }}">Voter List</a><a href="{{ url_for('admin.catalog') }}">Services &amp; Categories</a>
+<span class="sp"></span><a href="{{ url_for('admin.logout') }}">Logout</a></nav>{% endif %}
+<main>{% for m in get_flashed_messages() %}<div class="flash">{{ m }}</div>{% endfor %}{% block body %}{% endblock %}</main>
+</body></html>

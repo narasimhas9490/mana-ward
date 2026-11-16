@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% block body %}
+<p><a href="{{ url_for('admin.issues') }}">← All problems</a></p>
+<div class="two">
+<div class="card"><h1>#{{ i.id }} {{ i.title }}</h1>
+<p class="mute">{{ i.category.icon if i.category }} {{ i.category.name if i.category }} · 📍 {{ i.location or '—' }} · {{ i.created_at.strftime('%d %b %Y %H:%M') }} UTC</p>
+<p>{{ i.description or '(no description)' }}</p>
+{% if i.photo_url %}<img src="{{ i.photo_url }}" style="max-width:100%;border-radius:8px">{% endif %}
+<p class="mute">Reported by {{ i.user.name or 'Resident' }} ({{ i.user.phone }}){% if i.user.is_verified %} ✅ verified{% endif %} · 👍 {{ i.upvote_count or 0 }}</p></div>
+<div class="card"><h2>Update</h2>
+<form method="post" style="display:grid;gap:8px">
+<select name="status">{% for s in ISSUE_STATUS %}<option {{ 'selected' if i.status==s }}>{{ s }}</option>{% endfor %}</select>
+<textarea name="admin_note" rows="3" placeholder="Note visible to residents (e.g. 'Work order given, will finish by Friday')">{{ i.admin_note }}</textarea>
+<label><input type="checkbox" name="hidden" value="1" {{ 'checked' if i.hidden }}> Hide from public feed</label>
+<button>Save</button></form>
+<h2 style="margin-top:18px">Comments ({{ i.comments|length }})</h2>
+{% for c in i.comments %}<div class="row"><span><b>{{ c.user.name or c.user.phone }}</b>{% if c.user.is_verified %} ✅{% endif %}: {{ c.text }}</span>
+<form method="post" action="{{ url_for('admin.comment_delete',cid=c.id) }}"><button class="bad">✕</button></form></div>{% else %}<p class="mute">None</p>{% endfor %}
+</div></div>{% endblock %}

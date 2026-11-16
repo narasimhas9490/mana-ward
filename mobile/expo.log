@@ -1,0 +1,12 @@
+Starting project at C:\Users\Nagar\code\my_ward\mobile
+Starting Metro Bundler
+
+warning: Bundler cache is empty, rebuilding (this may take a minute)
+Waiting on http://localhost:8081
+
+Logs for your project will appear below.
+Android Bundled 15124ms node_modules\expo\AppEntry.js (3928 modules)
+Android Bundled 11354ms node_modules\expo\AppEntry.js (3897 modules)
+ WARN  SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context
+Android Bundled 1486ms node_modules\expo\AppEntry.js (1 module)
+ WARN  SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context

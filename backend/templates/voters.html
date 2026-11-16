@@ -1,0 +1,11 @@
+{% extends "base.html" %}{% block body %}
+<h1>Ward voter list ({{ total }})</h1>
+<p class="mute">Voter-ID verification sends the OTP to the mobile number stored here for that Voter ID. Add voters you have the registered mobile for (house visits, party records).</p>
+<div class="two">
+<div class="card"><h2>Import CSV</h2><p class="mute">Columns: <code>voter_id,name,mobile</code></p>
+<form method="post" enctype="multipart/form-data" class="inline"><input type="file" name="csv" accept=".csv" required><button>Upload</button></form></div>
+<div class="card"><h2>Add one voter</h2><form method="post" action="{{ url_for('admin.voter_add') }}" class="inline">
+<input name="voter_id" placeholder="Voter ID (EPIC)" required><input name="name" placeholder="Name"><input name="mobile" placeholder="Mobile" required><button>Add</button></form></div></div>
+<h2 style="margin-top:16px">First 200</h2>
+<div class="wrap"><table><tr><th>Voter ID</th><th>Name</th><th>Mobile</th></tr>
+{% for v in items %}<tr><td>{{ v.voter_id }}</td><td>{{ v.name }}</td><td>XXXXXX{{ v.mobile[-4:] }}</td></tr>{% endfor %}</table></div>{% endblock %}

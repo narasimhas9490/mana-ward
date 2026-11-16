@@ -1,0 +1,20 @@
+{% extends "base.html" %}{% block body %}
+<h1>Dashboard <span class="mute" style="font-size:13px;font-weight:400">— {{ ward }}</span></h1>
+<div class="grid">
+{% for label,val,href in [("Residents",s.users,url_for('admin.users')),("Verified voters",s.verified,url_for('admin.users',verified=1)),
+ ("Problems reported",s.issues,url_for('admin.issues')),("Open problems",s.open_issues,url_for('admin.issues',status='open')),
+ ("Resolved",s.resolved,url_for('admin.issues',status='resolved')),("New this week",s.new_week,url_for('admin.issues')),
+ ("Service requests",s.requests,url_for('admin.requests_')),("Pending requests",s.pending_requests,url_for('admin.requests_',status='submitted'))] %}
+<a href="{{ href }}" class="card stat" style="text-decoration:none;color:inherit"><b>{{ val }}</b><span>{{ label }}</span></a>{% endfor %}
+</div>
+<div class="two">
+<div class="card"><h2>🔥 Most-upvoted unresolved problems</h2>
+{% for i in top %}<div class="row"><a href="{{ url_for('admin.issue',iid=i.id) }}">{{ i.title }}</a><span>👍 {{ i.upvote_count or 0 }}</span></div>{% else %}<p class="mute">Nothing yet</p>{% endfor %}</div>
+<div class="card"><h2>Problems by category</h2>
+{% for n,ic,c in by_cat %}<div class="row"><span>{{ ic }} {{ n }}</span><b>{{ c }}</b></div>{% endfor %}</div>
+<div class="card"><h2>Service requests by type</h2>
+{% for n,ic,c in by_service %}<div class="row"><span>{{ ic }} {{ n }}</span><b>{{ c }}</b></div>{% endfor %}</div>
+<div class="card"><h2>Export (CSV)</h2><p><a class="btn" href="{{ url_for('admin.export',what='issues') }}">Problems</a>
+<a class="btn" href="{{ url_for('admin.export',what='requests') }}">Service requests</a>
+<a class="btn" href="{{ url_for('admin.export',what='users') }}">Users</a></p></div>
+</div>{% endblock %}
