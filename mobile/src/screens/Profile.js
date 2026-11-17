@@ -4,6 +4,7 @@ import { Alert, Dimensions, Image, Pressable, ScrollView, Text, TextInput, View 
 import { LinearGradient } from 'expo-linear-gradient';
 import { SealCheck, IdentificationCard, ShieldCheck, SignOut, MapPin, HandHeart, ChatCircle, GridFour } from 'phosphor-react-native';
 import { api, setToken, photoUrl } from '../api';
+import { unregisterPush } from '../push';
 import { Avatar, Btn, C, FadeIn, Input, NameLine, VerifiedBadge, s } from '../ui';
 import { CatIconBare, catGradient } from '../icons';
 
@@ -61,6 +62,12 @@ export default function Profile({ user, setUser, onLogout, onOpenPost }) {
           {!!user.street && <Text style={{ color: C.mute, fontSize: 14, marginTop: 1 }}>{user.street}</Text>}
           <Text style={{ color: C.mute, fontSize: 13, marginTop: 1 }}>+91 {user.phone}</Text>
         </View>
+
+        {(st.earned > 0 || st.pending > 0) && (
+          <View style={{ flexDirection: 'row', marginHorizontal: 16, marginTop: 12, borderRadius: 12, backgroundColor: '#F4F4F4', padding: 12 }}>
+            <View style={{ flex: 1 }}><Text style={{ fontWeight: '800', fontSize: 17, color: '#0B7A47' }}>₹{st.earned || 0}</Text><Text style={{ color: C.mute, fontSize: 12 }}>Rewards paid</Text></View>
+            <View style={{ flex: 1 }}><Text style={{ fontWeight: '800', fontSize: 17, color: '#9A6700' }}>₹{st.pending || 0}</Text><Text style={{ color: C.mute, fontSize: 12 }}>Pending (we will call you)</Text></View>
+          </View>)}
 
         <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginTop: 12 }}>
           <View style={{ flex: 1 }}><Btn kind="ghost" title={editing ? 'Cancel' : 'Edit profile'} onPress={() => setEditing(!editing)} style={{ paddingVertical: 8 }} /></View>
@@ -120,6 +127,10 @@ export default function Profile({ user, setUser, onLogout, onOpenPost }) {
                   <View style={{ position: 'absolute', top: 8, right: 8 }}><CatIconBare name={p.category?.name} size={18} color="#fff" weight="fill" /></View>
                   <Text numberOfLines={4} style={{ color: '#fff', fontWeight: '800', fontSize: 12.5 }}>{p.title}</Text>
                 </LinearGradient>}
+            {p.reward && p.reward.state === 'paid' && (
+              <View style={{ position: 'absolute', left: 6, top: 6, backgroundColor: '#0B7A47', borderRadius: 99, paddingHorizontal: 7, paddingVertical: 2 }}>
+                <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>₹{p.reward.amount} paid</Text>
+              </View>)}
             <View style={{ position: 'absolute', left: 6, bottom: 6, flexDirection: 'row', alignItems: 'center' }}>
               {p.photo && <><HandHeart size={13} color="#fff" weight="fill" /><Text style={{ color: '#fff', fontSize: 12, fontWeight: '700', marginLeft: 3 }}>{p.upvotes}</Text></>}
             </View>
@@ -127,7 +138,7 @@ export default function Profile({ user, setUser, onLogout, onOpenPost }) {
       </View>
       {mine.length === 0 && <Text style={{ textAlign: 'center', color: C.mute, marginTop: 30 }}>Problems you post will appear here.</Text>}
 
-      <Pressable onPress={async () => { await setToken(null); onLogout(); }} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 22 }}>
+      <Pressable onPress={async () => { await unregisterPush(); await setToken(null); onLogout(); }} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 22 }}>
         <SignOut size={20} color={C.bad} /><Text style={{ marginLeft: 8, color: C.bad, fontWeight: '700' }}>Log out</Text>
       </Pressable>
     </ScrollView>

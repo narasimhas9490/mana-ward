@@ -134,10 +134,14 @@ def wards():
 @auth()
 def me():
     posts = aw.count("issues", [S.equal("user_id", g.user.id), S.equal("hidden", False)])
-    mine = aw.all("issues", [S.equal("user_id", g.user.id), S.q("select", values=["upvote_count"])])
+    mine = aw.all("issues", [S.equal("user_id", g.user.id),
+                             S.q("select", values=["upvote_count", "paid", "hidden", "status"])])
     likes = sum(i.upvote_count or 0 for i in mine)
+    amt = app.config["REWARD_PER_POST"]
+    earned = amt * sum(1 for i in mine if i.paid)
+    pending = amt * sum(1 for i in mine if not i.paid and not i.hidden and i.status != "rejected")
     reqs = aw.count("service_requests", [S.equal("user_id", g.user.id)])
-    return jsonify({**M.user_me(g.user), "stats": {"posts": posts, "likes": likes, "requests": reqs}})
+    return jsonify({**M.user_me(g.user), "stats": {"posts": posts, "likes": likes, "requests": reqs, "earned": earned, "pending": pending}})
 
 
 @api.put("/me")
@@ -148,6 +152,19 @@ def update_me():
     if d.get("ward_id") in OPEN_WARDS:
         patch["ward_id"] = d["ward_id"]
     return jsonify(M.user_me(aw.update("users", g.user.id, patch)))
+
+
+@api.put("/me/push-token")
+@auth()
+def set_push_token():
+    """The app registers this phone's FCM token; null on logout."""
+    t = (request.json or {}).get("token")
+    if t is not None:
+        t = str(t)[:255]
+        for o in aw.list("users", [S.equal("push_token", t), S.not_equal("$id", g.user.id)], lim=25, total=False)[0]:
+            aw.update("users", o.id, {"push_token": None})  # a token belongs to one account (shared / re-used phone)
+    aw.update("users", g.user.id, {"push_token": t})
+    return jsonify(ok=True)
 
 
 # ---------- voter verification ----------
@@ -194,11 +211,23 @@ def enrich_issues(items, uid=None):
     if uid and items:
         voted = {u.issue_id for u in aw.list("upvotes", [S.equal("user_id", uid), S.equal("issue_id", [i.id for i in items])],
                                               lim=100, total=False)[0]}
-    return [issue_json(i, users.get(i.user_id), cats.get(i.category_id), i.id in voted) for i in items]
+    return [issue_json(i, users.get(i.user_id), cats.get(i.category_id), i.id in voted, uid) for i in items]
 
 
-def issue_json(i, user, cat, upvoted):
+def reward_json(i):
+    """Reward status for the post's own author (admin marks it paid after paying on PhonePe)."""
+    if i.paid:
+        state = "paid"
+    elif i.hidden or i.status == "rejected":
+        state = "none"
+    else:
+        state = "pending"
+    return {"amount": app.config["REWARD_PER_POST"], "state": state, "paid_at": i.paid_at}
+
+
+def issue_json(i, user, cat, upvoted, uid=None):
     return {
+        "reward": reward_json(i) if uid and i.user_id == uid else None,  # only the author sees payment status
         "id": i.id, "title": i.title, "description": i.description or "", "location": i.location or "",
         "photo": aw.photo_url(i.photo) if i.photo else None,
         "status": i.status or "open", "admin_note": i.admin_note or "",

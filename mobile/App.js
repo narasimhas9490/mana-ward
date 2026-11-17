@@ -4,6 +4,7 @@ import { House, Receipt, PlusSquare, UserCircle } from 'phosphor-react-native';
 import { useFonts, AnekTelugu_800ExtraBold } from '@expo-google-fonts/anek-telugu';
 import { api, loadToken, setToken } from './src/api';
 import { useBack } from './src/useBack';
+import { registerPush } from './src/push';
 import { Avatar, C, FadeIn, Press } from './src/ui';
 import Login from './src/screens/Login';
 import { Feed } from './src/screens/Feed';
@@ -48,6 +49,8 @@ function App() {
       } finally { setReady(true); }
     })();
   }, []);
+
+  useEffect(() => { if (user) registerPush(); }, [user && user.id]); // push token for "reward paid" alerts
 
   // Swipe left/right on the main area to move between Home / Services / Profile.
   // Non-capturing, so horizontal child scrollers (category chips) and vertical lists still get their own gestures first.

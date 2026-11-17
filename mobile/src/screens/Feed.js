@@ -112,23 +112,22 @@ export function Feed({ me, onReport }) {
         )}
       </View>
 
-      {items === null ? (
-        <View>{header}<PostSkeleton /><PostSkeleton /></View>
-      ) : (
-        <FlatList data={items} keyExtractor={(i) => String(i.id)}
-          ListHeaderComponent={header}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={C.ink} />}
-          renderItem={({ item }) => <PostCard i={item} me={me} onChange={change(item.id)} />}
-          ListEmptyComponent={
-            <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 40 }}>
-              <View style={{ width: 84, height: 84, borderRadius: 42, borderWidth: 2.5, borderColor: C.ink, alignItems: 'center', justifyContent: 'center' }}>
-                <Camera size={40} color={C.ink} />
-              </View>
-              <Text style={{ fontSize: 22, fontWeight: '800', color: C.ink, marginTop: 16 }}>{q ? 'No results' : 'No problems yet'}</Text>
-              <Text style={[s.mute, { textAlign: 'center', marginTop: 6, fontSize: 14 }]}>{q ? 'Try another word.' : 'Be the first to post a problem in your ward.'}</Text>
-            </View>}
-          contentContainerStyle={{ paddingBottom: 20 }} />
-      )}
+      {/* One list for loading + loaded: the stories/filter header stays mounted, so its horizontal scroll position survives a reload. */}
+      <FlatList data={items || []} keyExtractor={(i) => String(i.id)}
+        ListHeaderComponent={header}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={C.ink} />}
+        renderItem={({ item }) => <PostCard i={item} me={me} onChange={change(item.id)} />}
+        ListEmptyComponent={items === null ? (
+          <View><PostSkeleton /><PostSkeleton /></View>
+        ) : (
+          <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 40 }}>
+            <View style={{ width: 84, height: 84, borderRadius: 42, borderWidth: 2.5, borderColor: C.ink, alignItems: 'center', justifyContent: 'center' }}>
+              <Camera size={40} color={C.ink} />
+            </View>
+            <Text style={{ fontSize: 22, fontWeight: '800', color: C.ink, marginTop: 16 }}>{q ? 'No results' : 'No problems yet'}</Text>
+            <Text style={[s.mute, { textAlign: 'center', marginTop: 6, fontSize: 14 }]}>{q ? 'Try another word.' : 'Be the first to post a problem in your ward.'}</Text>
+          </View>)}
+        contentContainerStyle={{ paddingBottom: 20 }} />
     </View>
   );
 }

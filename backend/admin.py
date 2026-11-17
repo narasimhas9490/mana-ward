@@ -138,8 +138,13 @@ def issue_pay(iid):
     """Mark the Rs reward for this post as paid / not paid (admin calls the resident and pays via PhonePe)."""
     i = aw.get("issues", iid) or abort(404)
     paid = request.form.get("paid") == "1"
+    newly_paid = paid and not i.paid
     aw.update("issues", iid, {"paid": paid, "paid_at": iso(now()) if paid else None,
                               "pay_ref": request.form.get("pay_ref", "").strip()[:60] if paid else None})
+    if newly_paid:
+        from push import notify_user
+        notify_user(i.user_id, f"₹{app.config['REWARD_PER_POST']} reward paid 🎉",
+                    f"Your post \"{i.title[:60]}\" earned ₹{app.config['REWARD_PER_POST']}. Check your PhonePe.", {"type": "reward", "issue_id": iid})
     flash(f"Marked {'PAID' if paid else 'NOT PAID'}")
     return redirect(request.referrer or url_for("admin.issue", iid=iid))
 

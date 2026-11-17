@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Dimensions, Image, Pressable, ScrollView, Share, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, ChatCircle, DotsThree, HandHeart, MapPin, Megaphone, PaperPlaneTilt } from 'phosphor-react-native';
+import { ArrowLeft, ChatCircle, CheckCircle, Coins, DotsThree, HandHeart, MapPin, Megaphone, PaperPlaneTilt } from 'phosphor-react-native';
 import { api, photoUrl } from '../api';
 import { Avatar, C, NameLine, StatusPill, longAgo } from '../ui';
 import { CatIconBare, catGradient } from '../icons';
@@ -59,6 +59,19 @@ export function PostCard({ i, me, onChange }) {
         <StatusPill v={i.status} />
         <DotsThree size={26} color={C.ink} weight="bold" style={{ marginLeft: 6 }} />
       </View>
+
+      {/* reward status: visible only to the author */}
+      {i.reward && i.reward.state !== 'none' && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: 12, marginBottom: 8, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 10,
+          backgroundColor: i.reward.state === 'paid' ? '#E4F7EC' : '#FFF4DA' }}>
+          {i.reward.state === 'paid'
+            ? <CheckCircle size={18} color="#0B7A47" weight="fill" />
+            : <Coins size={18} color="#9A6700" weight="fill" />}
+          <Text style={{ marginLeft: 7, fontWeight: '700', fontSize: 13, color: i.reward.state === 'paid' ? '#0B7A47' : '#9A6700' }}>
+            {i.reward.state === 'paid' ? `₹${i.reward.amount} reward paid` : `₹${i.reward.amount} reward pending`}
+          </Text>
+          {i.reward.state === 'pending' && <Text style={{ marginLeft: 6, fontSize: 12, color: '#9A6700', flex: 1 }} numberOfLines={1}>· we will call you to pay on PhonePe</Text>}
+        </View>)}
 
       {/* media: photo, or a bold gradient text card when there is no photo */}
       <Pressable onPress={tapMedia}>

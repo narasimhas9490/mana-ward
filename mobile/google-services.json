@@ -1,0 +1,76 @@
+{
+  "project_info": {
+    "project_number": "1024609090462",
+    "project_id": "prajakeeyam-4421a",
+    "storage_bucket": "prajakeeyam-4421a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1024609090462:android:2305bd507c7b40f800f48f",
+        "android_client_info": {
+          "package_name": "com.prajakeeyam"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1024609090462-qmg8ocu0k5ho61p2npjis8g2i3lusmcq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.prajakeeyam",
+            "certificate_hash": "9f60a82ba3211db925fd650dc1c92f6905e36dfd"
+          }
+        },
+        {
+          "client_id": "1024609090462-4lptbqsjij436u8fshlkb7boftoma39k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyClKNyaELSb4QCL38DB5aqkkTCvxrQtjyY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1024609090462-4lptbqsjij436u8fshlkb7boftoma39k.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1024609090462:android:cda35cdfc3ff6d8400f48f",
+        "android_client_info": {
+          "package_name": "in.myward.thakatamvaripalle"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1024609090462-4lptbqsjij436u8fshlkb7boftoma39k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyClKNyaELSb4QCL38DB5aqkkTCvxrQtjyY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1024609090462-4lptbqsjij436u8fshlkb7boftoma39k.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
