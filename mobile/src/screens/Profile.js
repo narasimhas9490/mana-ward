@@ -24,16 +24,16 @@ export default function Profile({ user, setUser, onLogout, onOpenPost }) {
   const [name, setName] = useState(user.name === 'Resident' ? '' : user.name);
   const [street, setStreet] = useState(user.street || '');
   const [epic, setEpic] = useState('');
-  const [house, setHouse] = useState('');
-  const [age, setAge] = useState('');
-  const [rname, setRname] = useState('');
+  const [found, setFound] = useState(null); // roll entry returned for the typed Voter ID, waiting for the user to confirm
   const [mine, setMine] = useState([]);
   useEffect(() => { api('/issues?mine=1').then(setMine).catch(() => {}); }, []);
 
   const guard = async (fn) => { try { await fn(); } catch (e) { Alert.alert('Oops', e.message); } };
   const save = () => guard(async () => { setUser({ ...user, ...(await api('/me', { method: 'PUT', body: { name, street } })) }); setEditing(false); });
-  const verify = () => guard(async () => {
-    setUser({ ...user, ...(await api('/voter/verify', { method: 'POST', body: { voter_id: epic, house, age, relation_name: rname } })) });
+  const lookup = () => guard(async () => { setFound((await api('/voter/lookup', { method: 'POST', body: { voter_id: epic.trim().toUpperCase() } })).voter); });
+  const confirm = () => guard(async () => {
+    setUser({ ...user, ...(await api('/voter/verify', { method: 'POST', body: { voter_id: found.voter_id } })) });
+    setFound(null);
     Alert.alert('You are verified', 'The blue tick now shows next to your name.');
   });
   const st = user.stats || { posts: mine.length, likes: 0, requests: 0 };
@@ -95,12 +95,28 @@ export default function Profile({ user, setUser, onLogout, onOpenPost }) {
               </View>
             </LinearGradient>
             <View style={{ padding: 14 }}>
-              <Input icon={IdentificationCard} placeholder="Voter ID (EPIC) e.g. NZB1234567" autoCapitalize="characters" value={epic} onChangeText={setEpic} />
-              <Input placeholder="House number (as on your Voter ID) e.g. 1-4" autoCapitalize="characters" value={house} onChangeText={setHouse} />
-              <Input placeholder="Your age" keyboardType="number-pad" maxLength={3} value={age} onChangeText={setAge} />
-              <Input placeholder="Husband / Father name (optional)" autoCapitalize="characters" value={rname} onChangeText={setRname} />
-              <Btn title="Verify me" onPress={verify} disabled={epic.trim().length < 6 || !house.trim() || !age.trim()} />
-              <Text style={[s.mute, { marginTop: 8, fontSize: 12 }]}>We match these with the ward voter list. Your details stay private.</Text>
+              {!found ? (
+                <>
+                  <Input icon={IdentificationCard} placeholder="Voter ID (EPIC) e.g. NZB1234567" autoCapitalize="characters" value={epic} onChangeText={setEpic} />
+                  <Btn title="Find my details" onPress={lookup} disabled={epic.trim().length < 6} />
+                  <Text style={[s.mute, { marginTop: 8, fontSize: 12 }]}>Enter the Voter ID printed on your card. We will show the details from the ward voter list for you to confirm.</Text>
+                </>
+              ) : (
+                <>
+                  <Text style={{ fontWeight: '800', fontSize: 15, color: C.ink, marginBottom: 8 }}>Is this you?</Text>
+                  <View style={{ backgroundColor: '#F6F8FA', borderRadius: 14, padding: 14 }}>
+                    <Text style={{ fontWeight: '900', fontSize: 18, color: C.ink }}>{found.name}</Text>
+                    {[['Voter ID', found.voter_id], [found.relation === 'Husband' ? "Husband's name" : found.relation === 'Father' ? "Father's name" : 'Relative', found.relation_name],
+                      ['House number', found.house], ['Age', found.age], ['Gender', found.gender], ['Area', found.section]].map(([k, v]) => (
+                      <View key={k} style={{ flexDirection: 'row', marginTop: 6 }}>
+                        <Text style={{ width: 118, color: C.mute, fontSize: 13 }}>{k}</Text>
+                        <Text style={{ flex: 1, color: C.ink, fontSize: 14, fontWeight: '600' }}>{String(v ?? '')}</Text>
+                      </View>))}
+                  </View>
+                  <View style={{ marginTop: 12 }}><Btn title="Yes, this is me. Confirm" onPress={confirm} /></View>
+                  <Pressable onPress={() => setFound(null)} style={{ alignItems: 'center', marginTop: 12 }}><Text style={{ color: C.blue, fontWeight: '700' }}>Not me, change Voter ID</Text></Pressable>
+                </>
+              )}
             </View>
           </View>
         )}
