@@ -1,4 +1,4 @@
-import hashlib, os, re, secrets
+import base64, hashlib, io, os, re, secrets
 from datetime import timedelta
 from functools import wraps
 import jwt
@@ -258,6 +258,14 @@ def create_issue():
         if ext not in PHOTO_TYPES:
             return err("Photo must be JPG/PNG")
         photo = aw.upload(p.stream, f"{secrets.token_hex(8)}{ext}", PHOTO_TYPES[ext])  # -> Appwrite Storage
+    elif f.get("photo_b64"):  # app sends a resized JPEG as base64 inside the JSON body (no multipart)
+        try:
+            raw = base64.b64decode(f["photo_b64"].split(",")[-1], validate=False)
+        except Exception:
+            return err("Could not read the photo, please pick another")
+        if not raw or len(raw) > 5 * 1024 * 1024:
+            return err("Photo is too large (max 5 MB). Please pick a smaller one.")
+        photo = aw.upload(io.BytesIO(raw), f"{secrets.token_hex(8)}.jpg", "image/jpeg")
     cat = f.get("category_id") or None
     data = {"user_id": g.user.id, "title": title[:150], "description": (f.get("description") or "")[:3000],
             "ward_id": g.user.ward_id or 1, "location": (f.get("location") or g.user.street or "")[:150],

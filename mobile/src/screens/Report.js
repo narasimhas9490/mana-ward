@@ -26,8 +26,8 @@ export default function Report({ user, onDone, onCancel }) {
     try {
       const out = await ImageManipulator.manipulateAsync(
         a.uri, a.width > 1280 ? [{ resize: { width: 1280 } }] : [],
-        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG });
-      setPhoto({ ...a, uri: out.uri, width: out.width, height: out.height });
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true });
+      setPhoto({ ...a, uri: out.uri, width: out.width, height: out.height, b64: out.base64 });
     } catch { setPhoto(a); }
   };
   const ok = title.trim().length >= 5 && !busy;
@@ -35,11 +35,16 @@ export default function Report({ user, onDone, onCancel }) {
     if (!ok) return;
     setBusy(true);
     try {
-      const f = new FormData();
-      f.append('title', title); f.append('description', desc); f.append('location', loc);
-      if (cat) f.append('category_id', String(cat));
-      if (photo) f.append('photo', { uri: photo.uri, name: 'photo.jpg', type: 'image/jpeg' });
-      await api('/issues', { method: 'POST', form: f });
+      if (photo && photo.b64) {
+        // resized JPEG travels as base64 in a JSON body: avoids RN multipart file uploads, which failed on this device
+        await api('/issues', { method: 'POST', body: { title, description: desc, location: loc, category_id: cat ? String(cat) : null, photo_b64: photo.b64 } });
+      } else {
+        const f = new FormData();
+        f.append('title', title); f.append('description', desc); f.append('location', loc);
+        if (cat) f.append('category_id', String(cat));
+        if (photo) f.append('photo', { uri: photo.uri, name: 'photo.jpg', type: 'image/jpeg' });
+        await api('/issues', { method: 'POST', form: f });
+      }
       onDone();
     } catch (e) { Alert.alert('Oops', e.message); }
     setBusy(false);

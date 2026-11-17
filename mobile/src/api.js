@@ -26,7 +26,7 @@ export async function api(path, { method = 'GET', body, form } = {}) {
     res = await fetch(BASE_URL + '/api' + path, { method, headers, signal: ctl.signal, body: form || (body && JSON.stringify(body)) });
   } catch (err) {
     if (err && err.name === 'AbortError') throw new Error('Server is waking up (free hosting). Please wait a minute and try again.');
-    throw new Error('No internet / server not reachable');
+    throw new Error('No internet / server not reachable' + (err && err.message ? ` (${err.message})` : ''));
   } finally {
     clearTimeout(timer);
   }
