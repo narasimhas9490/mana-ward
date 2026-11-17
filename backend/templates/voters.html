@@ -6,6 +6,15 @@
 <form method="post" enctype="multipart/form-data" class="inline"><input type="file" name="csv" accept=".csv" required><button>Upload</button></form></div>
 <div class="card"><h2>Add one voter</h2><form method="post" action="{{ url_for('admin.voter_add') }}" class="inline">
 <input name="voter_id" placeholder="Voter ID (EPIC)" required><input name="name" placeholder="Name"><input name="relation_name" placeholder="Husband/Father"><input name="house" placeholder="House no." size="8"><input name="age" placeholder="Age" size="4"><button>Add</button></form></div></div>
-<h2 style="margin-top:16px">First 200</h2>
-<div class="wrap"><table><tr><th>Voter ID</th><th>Name</th><th>Husband/Father</th><th>House</th><th>Age</th><th>Sex</th><th>Section</th></tr>
-{% for v in items %}<tr><td>{{ v.voter_id }}</td><td>{{ v.name }}</td><td>{{ v.relation_name or '' }}</td><td>{{ v.house or '' }}</td><td>{{ v.age or '' }}</td><td>{{ (v.gender or '')[:1] }}</td><td>{{ v.section or '' }}</td></tr>{% endfor %}</table></div>{% endblock %}
+<form class="bar" method="get" style="margin-top:16px">
+<input name="q" placeholder="Search name, voter ID, husband/father, house no." value="{{ request.args.q or '' }}" size="38" autofocus>
+<select name="section"><option value="">All sections</option>
+<option value="1" {{ 'selected' if request.args.section=='1' }}>1 Balasanivaripalle</option><option value="2" {{ 'selected' if request.args.section=='2' }}>2 Thakatamvaripalli</option>
+<option value="3" {{ 'selected' if request.args.section=='3' }}>3 B Kothakota 1</option><option value="4" {{ 'selected' if request.args.section=='4' }}>4 B Kothakota</option></select>
+<select name="gender"><option value="">All</option><option value="M" {{ 'selected' if request.args.gender=='M' }}>Male</option><option value="F" {{ 'selected' if request.args.gender=='F' }}>Female</option></select>
+<select name="joined"><option value="">In app: any</option><option value="yes" {{ 'selected' if request.args.joined=='yes' }}>Verified in app</option><option value="no" {{ 'selected' if request.args.joined=='no' }}>Not yet in app</option></select>
+<button>Search</button> <a class="btn ghost" href="{{ url_for('admin.voters') }}" style="background:transparent;color:inherit;border:1px solid var(--line)">Clear</a></form>
+<p class="mute">Showing {{ items|length }}{% if found > items|length %} of {{ found }} matches (refine the search to see the rest){% else %} match{{ '' if found == 1 else 'es' }}{% endif %} · {{ total }} voters in the list · {{ joined_total }} linked to app accounts</p>
+<div class="wrap"><table><tr><th>#</th><th>Voter ID</th><th>Name</th><th>Husband/Father</th><th>House</th><th>Age</th><th>Sex</th><th>Section</th><th>App</th></tr>
+{% for v in items %}<tr><td>{{ v.serial or '' }}</td><td>{{ v.voter_id }}</td><td>{{ v.name }}</td><td>{{ v.relation_name or '' }}</td><td>{{ v.house or '' }}</td><td>{{ v.age or '' }}</td><td>{{ (v.gender or '')[:1] }}</td><td>{{ v.section or '' }}</td><td>{% if v.joined %}<span class="pill ok">verified</span>{% endif %}</td></tr>
+{% else %}<tr><td colspan="9" class="mute">No voters match</td></tr>{% endfor %}</table></div>{% endblock %}

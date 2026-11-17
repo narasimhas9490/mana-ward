@@ -3,6 +3,7 @@ from datetime import timedelta
 from functools import wraps
 from flask import (Blueprint, current_app as app, flash, redirect, render_template, request, session, url_for, Response, abort)
 import store as S
+from store import cached_all
 from store import aw, iso, now, invalidate
 import models as M
 
@@ -264,12 +265,32 @@ def voters():
                     row["mobile"] = mob
                 batch[epic] = row
             aw.upsert_many("voter_roll", list(batch.values()))
+            invalidate("voter_roll")
             flash(f"Imported {len(batch)} voters, skipped {skipped} invalid rows")
         return redirect(url_for("admin.voters"))
-    items, total = aw.list("voter_roll", [S.order_asc("$id")], lim=200)
-    for v in items:
+    # Whole roll is small (hundreds of rows): load it once (cached) and filter here, so every field is searchable.
+    allv = sorted(cached_all("voter_roll", ttl=120), key=lambda v: (v.serial or 0))
+    a = request.args
+    q = (a.get("q") or "").strip().lower()
+    sec, gen, only = a.get("section", ""), a.get("gender", ""), a.get("joined", "")
+    joined = {u.voter_id for u in aw.all("users", [S.q("select", values=["voter_id"])]) if u.voter_id}
+    items = []
+    for v in allv:
         v.voter_id = v.id
-    return render_template("voters.html", total=total, items=items)
+        v.joined = v.id in joined
+        hay = " ".join(str(x or "") for x in (v.id, v.name, v.relation_name, v.house, v.section)).lower()
+        if q and q not in hay.replace("-", " ") and q not in hay:
+            continue
+        if sec and str(v.section_no) != sec:
+            continue
+        if gen and (v.gender or "")[:1].upper() != gen:
+            continue
+        if only == "yes" and not v.joined:
+            continue
+        if only == "no" and v.joined:
+            continue
+        items.append(v)
+    return render_template("voters.html", total=len(allv), items=items[:300], found=len(items), joined_total=len(joined))
 
 
 @admin.post("/voters/add")
@@ -285,6 +306,7 @@ def voter_add():
         if len(mob) == 10:
             data["mobile"] = mob
         aw.upsert("voter_roll", epic, data)
+        invalidate("voter_roll")
     else:
         flash("Need a valid voter id (6-15 letters/digits)")
     return redirect(url_for("admin.voters"))
