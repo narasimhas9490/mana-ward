@@ -24,21 +24,16 @@ export default function Profile({ user, setUser, onLogout, onOpenPost }) {
   const [name, setName] = useState(user.name === 'Resident' ? '' : user.name);
   const [street, setStreet] = useState(user.street || '');
   const [epic, setEpic] = useState('');
-  const [otp, setOtp] = useState('');
-  const [masked, setMasked] = useState(null);
+  const [house, setHouse] = useState('');
+  const [age, setAge] = useState('');
+  const [rname, setRname] = useState('');
   const [mine, setMine] = useState([]);
   useEffect(() => { api('/issues?mine=1').then(setMine).catch(() => {}); }, []);
 
   const guard = async (fn) => { try { await fn(); } catch (e) { Alert.alert('Oops', e.message); } };
   const save = () => guard(async () => { setUser({ ...user, ...(await api('/me', { method: 'PUT', body: { name, street } })) }); setEditing(false); });
-  const sendOtp = () => guard(async () => {
-    const r = await api('/voter/send-otp', { method: 'POST', body: { voter_id: epic } });
-    setMasked(r.masked_mobile);
-    if (r.dev_otp) Alert.alert('Dev mode', `Voter OTP is ${r.dev_otp}`);
-  });
   const verify = () => guard(async () => {
-    setUser({ ...user, ...(await api('/voter/verify', { method: 'POST', body: { voter_id: epic, otp } })) });
-    setMasked(null);
+    setUser({ ...user, ...(await api('/voter/verify', { method: 'POST', body: { voter_id: epic, house, age, relation_name: rname } })) });
     Alert.alert('You are verified', 'The blue tick now shows next to your name.');
   });
   const st = user.stats || { posts: mine.length, likes: 0, requests: 0 };
@@ -100,15 +95,12 @@ export default function Profile({ user, setUser, onLogout, onOpenPost }) {
               </View>
             </LinearGradient>
             <View style={{ padding: 14 }}>
-              <Input icon={IdentificationCard} placeholder="Voter ID (EPIC) e.g. ABC1234567" autoCapitalize="characters" value={epic} onChangeText={setEpic} editable={!masked} />
-              {masked ? (
-                <>
-                  <Text style={[s.mute, { marginBottom: 8 }]}>OTP sent to the mobile registered with this Voter ID ({masked})</Text>
-                  <Input icon={ShieldCheck} placeholder="6-digit OTP" keyboardType="number-pad" maxLength={6} value={otp} onChangeText={setOtp} />
-                  <Btn title="Verify me" onPress={verify} disabled={otp.length !== 6} />
-                  <Pressable onPress={() => setMasked(null)} style={{ alignItems: 'center', marginTop: 12 }}><Text style={{ color: C.blue, fontWeight: '700' }}>Change Voter ID</Text></Pressable>
-                </>
-              ) : <Btn title="Send OTP" onPress={sendOtp} disabled={epic.trim().length < 6} />}
+              <Input icon={IdentificationCard} placeholder="Voter ID (EPIC) e.g. NZB1234567" autoCapitalize="characters" value={epic} onChangeText={setEpic} />
+              <Input placeholder="House number (as on your Voter ID) e.g. 1-4" autoCapitalize="characters" value={house} onChangeText={setHouse} />
+              <Input placeholder="Your age" keyboardType="number-pad" maxLength={3} value={age} onChangeText={setAge} />
+              <Input placeholder="Husband / Father name (optional)" autoCapitalize="characters" value={rname} onChangeText={setRname} />
+              <Btn title="Verify me" onPress={verify} disabled={epic.trim().length < 6 || !house.trim() || !age.trim()} />
+              <Text style={[s.mute, { marginTop: 8, fontSize: 12 }]}>We match these with the ward voter list. Your details stay private.</Text>
             </View>
           </View>
         )}

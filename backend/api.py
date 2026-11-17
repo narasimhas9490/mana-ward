@@ -167,38 +167,82 @@ def set_push_token():
     return jsonify(ok=True)
 
 
-# ---------- voter verification ----------
-@api.post("/voter/send-otp")
-@auth()
-def voter_send():
-    epic = ((request.json or {}).get("voter_id") or "").strip().upper()
-    if not EPIC_RE.match(epic):
-        return err("Enter a valid Voter ID (EPIC) number")
-    if g.user.is_verified:
-        return err("Already verified")
-    if aw.first("users", [S.equal("voter_id", epic), S.not_equal("$id", g.user.id)]):
-        return err("This Voter ID is already linked to another account", 409)
-    v = aw.get("voter_roll", epic)
-    if not v:
-        return err("This Voter ID is not in our ward voter list. Contact the ward office.", 404)
-    code, e = issue_otp(f"voter:{g.user.id}:{epic}", v.mobile)
-    if e:
-        return err(e, 429)
-    return jsonify(ok=True, masked_mobile="XXXXXX" + v.mobile[-4:],
-                   **({"dev_otp": code} if app.config["DEV_RETURN_OTP"] else {}))
+# ---------- voter verification (match against the electoral roll; the roll has no mobile numbers) ----------
+import difflib
+
+MAX_VOTER_TRIES = 5
+
+
+def _norm_house(x):
+    return re.sub(r"[^A-Z0-9]", "", str(x or "").upper())
+
+
+def _norm_name(x):
+    return re.sub(r"[^A-Z ]", "", str(x or "").upper()).split()
+
+
+def _names_match(a, b):
+    """Fuzzy: roll names come from OCR and people spell differently (initials, order)."""
+    A, B = _norm_name(a), _norm_name(b)
+    if not A or not B:
+        return False
+    ja, jb = "".join(A), "".join(B)
+    if difflib.SequenceMatcher(None, ja, jb).ratio() >= 0.72:
+        return True
+    hits = sum(1 for t in A if len(t) > 1 and any(difflib.SequenceMatcher(None, t, u).ratio() >= 0.8 for u in B if len(u) > 1))
+    return hits >= 1
+
+
+def _tries_row(uid):
+    return aw.first("otps", [S.equal("key", f"vtry:{uid}"), S.order_desc("$createdAt")])
 
 
 @api.post("/voter/verify")
 @auth()
 def voter_verify():
+    """Verify the user is a Ward voter: EPIC + house number + age (+ relative's name, optional) must match the roll."""
     d = request.json or {}
     epic = (d.get("voter_id") or "").strip().upper()
-    if not check_otp(f"voter:{g.user.id}:{epic}", d.get("otp")):
-        return err("Wrong or expired OTP", 401)
-    patch = {"voter_id": epic, "is_verified": True}
+    if not EPIC_RE.match(epic):
+        return err("Enter a valid Voter ID (EPIC) number")
+    if g.user.is_verified:
+        return err("Already verified")
+    tr = _tries_row(g.user.id)
+    if tr and parse_dt(tr.expires_at) > now() and (tr.attempts or 0) >= MAX_VOTER_TRIES:
+        return err("Too many wrong tries. Please try again tomorrow or contact the ward office.", 429)
+    if aw.first("users", [S.equal("voter_id", epic), S.not_equal("$id", g.user.id)]):
+        return err("This Voter ID is already linked to another account", 409)
     v = aw.get("voter_roll", epic)
-    if v and not g.user.name:
+
+    def fail(msg, code=404):
+        if tr and parse_dt(tr.expires_at) > now():
+            aw.update("otps", tr.id, {"attempts": (tr.attempts or 0) + 1})
+        else:
+            aw.create("otps", {"key": f"vtry:{g.user.id}", "code_hash": "-", "attempts": 1, "expires_at": iso(now() + timedelta(hours=24))})
+        return err(msg, code)
+
+    if not v:
+        return fail("This Voter ID is not in our ward voter list. Check the number or contact the ward office.")
+    ok_sections = {int(x) for x in str(app.config["WARD_SECTIONS"]).split(",") if x.strip()}
+    if v.section_no and int(v.section_no) not in ok_sections:
+        return err("This Voter ID is in the B.Kothakota roll but not in Ward 1 areas. Please contact the ward office.", 403)
+    house_ok = _norm_house(d.get("house")) == _norm_house(v.house) and bool(_norm_house(d.get("house")))
+    try:
+        age_ok = v.age is not None and abs(int(d.get("age")) - int(v.age)) <= 1
+    except (TypeError, ValueError):
+        age_ok = False
+    name_given = bool((d.get("relation_name") or "").strip())
+    name_ok = name_given and _names_match(d.get("relation_name"), v.relation_name)
+    # Age must match, plus either the house number or the husband/father name (the roll text is OCR'd, so allow one slip).
+    if not (age_ok and (house_ok or name_ok)):
+        return fail("Those details do not match the voter list. Check your age and house number exactly as on your Voter ID.", 401)
+    if name_given and not name_ok:
+        return fail("The husband/father name does not match the voter list.", 401)
+    patch = {"voter_id": epic, "is_verified": True}
+    if not g.user.name and v.name:
         patch["name"] = v.name
+    if tr:
+        aw.delete("otps", tr.id)
     return jsonify(M.user_me(aw.update("users", g.user.id, patch)))
 
 

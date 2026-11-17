@@ -117,6 +117,7 @@ def issue(iid):
     for c in i.comments:
         c.user = users.get(c.user_id) or S.Row({"$id": c.user_id, "name": "(deleted)", "phone": "—"})
     i.photo_url = aw.photo_url(i.photo) if i.photo else None
+    i.roll = aw.get("voter_roll", i.user.voter_id) if getattr(i.user, "voter_id", None) else None
     return render_template("issue.html", i=i)
 
 
@@ -248,11 +249,20 @@ def voters():
             batch, skipped = {}, 0
             for r in rows:
                 r = {(k or "").strip().lower(): (v or "").strip() for k, v in r.items()}
-                epic, mob = r.get("voter_id", "").upper(), re.sub(r"\D", "", r.get("mobile", ""))[-10:]
-                if not re.fullmatch(r"[A-Z0-9]{6,15}", epic) or len(mob) != 10:
+                epic = r.get("voter_id", "").upper()
+                mob = re.sub(r"\D", "", r.get("mobile", ""))[-10:]
+                if not re.fullmatch(r"[A-Z0-9]{6,15}", epic):
                     skipped += 1
                     continue
-                batch[epic] = {"$id": epic, "name": r.get("name", "")[:80], "mobile": mob}
+                row = {"$id": epic, "name": r.get("name", "")[:80], "relation": r.get("relation", "")[:12],
+                       "relation_name": r.get("relation_name", "")[:100], "house": r.get("house", "")[:30],
+                       "gender": r.get("gender", "")[:12], "section": r.get("section", "")[:60]}
+                for k in ("age", "section_no", "serial"):
+                    if r.get(k, "").isdigit():
+                        row[k] = int(r[k])
+                if len(mob) == 10:
+                    row["mobile"] = mob
+                batch[epic] = row
             aw.upsert_many("voter_roll", list(batch.values()))
             flash(f"Imported {len(batch)} voters, skipped {skipped} invalid rows")
         return redirect(url_for("admin.voters"))
@@ -266,11 +276,17 @@ def voters():
 @login_required
 def voter_add():
     epic = request.form["voter_id"].strip().upper()
-    mob = re.sub(r"\D", "", request.form["mobile"])[-10:]
-    if re.fullmatch(r"[A-Z0-9]{6,15}", epic) and len(mob) == 10:
-        aw.upsert("voter_roll", epic, {"name": request.form.get("name", "").strip()[:80], "mobile": mob})
+    mob = re.sub(r"\D", "", request.form.get("mobile", ""))[-10:]
+    if re.fullmatch(r"[A-Z0-9]{6,15}", epic):
+        data = {"name": request.form.get("name", "").strip()[:80], "house": request.form.get("house", "").strip()[:30],
+                "relation_name": request.form.get("relation_name", "").strip()[:100]}
+        if request.form.get("age", "").strip().isdigit():
+            data["age"] = int(request.form["age"])
+        if len(mob) == 10:
+            data["mobile"] = mob
+        aw.upsert("voter_roll", epic, data)
     else:
-        flash("Need a valid voter id (6-15 letters/digits) and a 10-digit mobile")
+        flash("Need a valid voter id (6-15 letters/digits)")
     return redirect(url_for("admin.voters"))
 
 

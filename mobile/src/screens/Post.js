@@ -10,7 +10,7 @@ import CommentsSheet from './Comments';
 const W = Dimensions.get('window').width;
 
 // One problem = one Instagram-style post
-export function PostCard({ i, me, onChange }) {
+export function PostCard({ i, me, onChange, showReward = false }) {  // showReward: only on the author's own post page, never in the feed
   const [sheet, setSheet] = useState(false);
   const [more, setMore] = useState(false);
   const burst = useRef(new Animated.Value(0)).current; // big double-tap heart
@@ -61,7 +61,7 @@ export function PostCard({ i, me, onChange }) {
       </View>
 
       {/* reward status: visible only to the author */}
-      {i.reward && i.reward.state !== 'none' && (
+      {showReward && i.reward && i.reward.state !== 'none' && (
         <View style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: 12, marginBottom: 8, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 10,
           backgroundColor: i.reward.state === 'paid' ? '#E4F7EC' : '#FFF4DA' }}>
           {i.reward.state === 'paid'
@@ -162,7 +162,7 @@ export function PostScreen({ id, me, onBack }) {
         <Pressable onPress={onBack} hitSlop={10}><ArrowLeft size={24} color={C.ink} weight="bold" /></Pressable>
         <Text style={{ fontSize: 17, fontWeight: '800', color: C.ink, marginLeft: 16 }}>Post</Text>
       </View>
-      {i && <ScrollView><PostCard i={i} me={me} onChange={(p) => setI((x) => ({ ...x, ...p }))} /></ScrollView>}
+      {i && <ScrollView><PostCard i={i} me={me} showReward onChange={(p) => setI((x) => ({ ...x, ...p }))} /></ScrollView>}
     </View>
   );
 }

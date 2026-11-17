@@ -8,6 +8,8 @@
 <p class="mute">Reported by {{ i.user.name or 'Resident' }} ({{ i.user.phone }}){% if i.user.is_verified %} ✅ verified{% endif %} · 👍 {{ i.upvote_count or 0 }}</p></div>
 <div class="card" style="border-color:{{ '#0b5b3a' if i.paid else '#7a4b00' }}"><h2>💰 Reward ₹{{ REWARD }}
 <span class="pill {{ 'ok' if i.paid else 'open' }}">{{ 'Paid' if i.paid else 'Not paid' }}</span></h2>
+{% if i.roll %}<p style="background:#e4f7ec;border-radius:8px;padding:8px">✅ <b>Voter-verified</b>: {{ i.roll.name }} · {{ i.roll.relation_name }} · House {{ i.roll.house }} · {{ i.roll.section }}<br><span class="mute">Before paying, check the PhonePe receiver name matches this name.</span></p>
+{% else %}<p style="background:#fff4da;border-radius:8px;padding:8px">⚠️ <b>Not voter-verified</b> — confirm identity and ward on the call before paying.</p>{% endif %}
 <p>Call <a href="tel:{{ i.user.phone }}"><b>{{ i.user.phone }}</b></a> ({{ i.user.name or 'Resident' }}) and pay ₹{{ REWARD }} on PhonePe, then mark it paid.</p>
 {% if i.paid %}<p class="mute">Paid {{ i.paid_at[:16].replace('T',' ') if i.paid_at }} UTC{% if i.pay_ref %} · ref {{ i.pay_ref }}{% endif %}</p>{% endif %}
 <form method="post" action="{{ url_for('admin.issue_pay',iid=i.id) }}" class="inline">

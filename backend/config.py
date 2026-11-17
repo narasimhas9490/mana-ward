@@ -11,6 +11,7 @@ if os.path.exists(_env):  # minimal .env loader
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-me-in-production-0000")
     ADMIN_USER = os.getenv("ADMIN_USER", "admin")
+    WARD_SECTIONS = os.getenv("WARD_SECTIONS", "1,2")  # roll sections inside Ward 1: 1 Balasanivaripalle, 2 Thakatamvaripalli
     REWARD_PER_POST = int(os.getenv("REWARD_PER_POST", "33"))  # Rs paid (via PhonePe) per post
     ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
     SMS_PROVIDER = os.getenv("SMS_PROVIDER", "console")

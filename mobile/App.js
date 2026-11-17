@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import Constants from 'expo-constants';
 import { PanResponder, Platform, SafeAreaView, StatusBar, Text, View } from 'react-native';
 import { House, Receipt, PlusSquare, UserCircle } from 'phosphor-react-native';
 import { useFonts, AnekTelugu_800ExtraBold } from '@expo-google-fonts/anek-telugu';
@@ -74,7 +75,9 @@ function App() {
   });
 
   if (!ready || !(fontsLoaded || fontError)) return <View style={{ flex: 1, backgroundColor: C.bg }} />;
-  const top = StatusBar.currentHeight || 0;
+  // Edge-to-edge Android draws under the status bar. StatusBar.currentHeight is read once at load and can be 0 if the
+  // window is not ready yet, so also use the system's status-bar size from expo-constants (always available).
+  const top = Math.max(StatusBar.currentHeight || 0, Constants.statusBarHeight || 0);
   const shell = (children) => (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg, paddingTop: top }}>
       <StatusBar barStyle="dark-content" backgroundColor={C.bg} />{children}
