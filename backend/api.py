@@ -120,6 +120,11 @@ def verify_otp():
     return jsonify(token=token_for(u), user=M.user_me(u))
 
 
+@api.get("/health")
+def health():
+    return jsonify(ok=True)  # cheap keep-warm / uptime-monitor target (no Appwrite call)
+
+
 @api.get("/wards")
 def wards():
     return jsonify([M.ward_json(w) for w in M.wards()])

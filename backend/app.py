@@ -12,6 +12,11 @@ def create_app():
     from admin import admin
     app.register_blueprint(api)
     app.register_blueprint(admin)
+    @app.errorhandler(413)
+    def too_big(_e):
+        from flask import jsonify
+        return jsonify(error="Photo is too large (max 6 MB). Please pick a smaller one."), 413
+
     with app.app_context():
         seed()  # fills wards/categories/services in Appwrite if empty
     return app

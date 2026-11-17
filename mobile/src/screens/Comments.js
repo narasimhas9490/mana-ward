@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useBack } from '../useBack';
 import {
   ActivityIndicator, Alert, Animated, Dimensions, FlatList, Keyboard, KeyboardAvoidingView, Modal, PanResponder, Pressable, Text, TextInput, View,
 } from 'react-native';
@@ -78,6 +79,7 @@ export default function CommentsSheet({ issue, me, onClose, onCount }) {
   const y = useRef(new Animated.Value(H)).current;
   const open = () => Animated.timing(y, { toValue: 0, duration: 300, useNativeDriver: true }).start();
   const close = () => Animated.timing(y, { toValue: H, duration: 220, useNativeDriver: true }).start(() => { Keyboard.dismiss(); onClose(); });
+  useBack(true, close);
   const pan = useRef(PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onPanResponderMove: (_, g) => { if (g.dy > 0) y.setValue(g.dy); },

@@ -4,7 +4,8 @@
 {% for label,val,href in [("Residents",s.users,url_for('admin.users')),("Verified voters",s.verified,url_for('admin.users',verified=1)),
  ("Problems reported",s.issues,url_for('admin.issues')),("Open problems",s.open_issues,url_for('admin.issues',status='open')),
  ("Resolved",s.resolved,url_for('admin.issues',status='resolved')),("New this week",s.new_week,url_for('admin.issues')),
- ("Service requests",s.requests,url_for('admin.requests_')),("Pending requests",s.pending_requests,url_for('admin.requests_',status='submitted'))] %}
+ ("Service requests",s.requests,url_for('admin.requests_')),("Pending requests",s.pending_requests,url_for('admin.requests_',status='submitted')),
+ ("Rewards due (₹"~s.due_amount~")",s.due,url_for('admin.issues',pay='due')),("Rewards paid (₹"~s.paid_amount~")",s.paid,url_for('admin.issues',pay='paid'))] %}
 <a href="{{ href }}" class="card stat" style="text-decoration:none;color:inherit"><b>{{ val }}</b><span>{{ label }}</span></a>{% endfor %}
 </div>
 <div class="two">

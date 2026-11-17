@@ -3,6 +3,7 @@ import { Alert, Image, Pressable, ScrollView, Text, TextInput, View } from 'reac
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { X, Camera, MapPin, ImageSquare } from 'phosphor-react-native';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { api } from '../api';
 import { C, Ring, s } from '../ui';
 import { CatTile, catGradient } from '../icons';
@@ -18,8 +19,16 @@ export default function Report({ user, onDone, onCancel }) {
   useEffect(() => { api('/categories').then(setCats).catch(() => {}); }, []);
 
   const pick = async () => {
-    const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6 });
-    if (!r.canceled) setPhoto(r.assets[0]);
+    const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    if (r.canceled) return;
+    const a = r.assets[0];
+    // Phone photos can be 5-10 MB (server limit is 6 MB). Shrink to 1280px JPEG (~200-400 KB) before upload.
+    try {
+      const out = await ImageManipulator.manipulateAsync(
+        a.uri, a.width > 1280 ? [{ resize: { width: 1280 } }] : [],
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG });
+      setPhoto({ ...a, uri: out.uri, width: out.width, height: out.height });
+    } catch { setPhoto(a); }
   };
   const ok = title.trim().length >= 5 && !busy;
   const submit = async () => {

@@ -11,6 +11,11 @@ ISSUE_STATUS = ["open", "in_progress", "resolved", "rejected"]
 SR_STATUS = ["submitted", "in_progress", "completed", "rejected"]
 
 
+# Posts still owed the reward: visible, not rejected, not yet paid.
+UNPAID = S.or_(S.equal("paid", False), S.q("isNull", "paid"))
+DUE = [UNPAID, S.equal("hidden", False), S.not_equal("status", "rejected")]
+
+
 def login_required(fn):
     @wraps(fn)
     def w(*a, **k):
@@ -22,7 +27,8 @@ def login_required(fn):
 
 @admin.app_context_processor
 def inject():
-    return {"ward": app.config["WARD_NAME"], "ISSUE_STATUS": ISSUE_STATUS, "SR_STATUS": SR_STATUS}
+    return {"ward": app.config["WARD_NAME"], "ISSUE_STATUS": ISSUE_STATUS, "SR_STATUS": SR_STATUS,
+            "REWARD": app.config["REWARD_PER_POST"]}
 
 
 def attach_issue_refs(items):
@@ -65,7 +71,11 @@ def dashboard():
         "requests": aw.count("service_requests"),
         "pending_requests": aw.count("service_requests", [S.equal("status", ["submitted", "in_progress"])]),
         "new_week": aw.count("issues", [S.gte("$createdAt", week)]),
+        "paid": aw.count("issues", [S.equal("paid", True)]),
+        "due": aw.count("issues", DUE),
     }
+    stats["due_amount"] = stats["due"] * app.config["REWARD_PER_POST"]
+    stats["paid_amount"] = stats["paid"] * app.config["REWARD_PER_POST"]
     cat_n = aw.counts_by("issues", "category_id")
     by_cat = sorted(((c.name, c.icon, cat_n.get(c.id, 0)) for c in M.categories()), key=lambda x: -x[2])
     svc_n = aw.counts_by("service_requests", "service_id")
@@ -87,6 +97,12 @@ def issues():
         qs.append(S.equal("ward_id", int(a["ward"])))
     if a.get("q"):
         qs.append(S.contains("title", a["q"]))
+    if a.get("pay") == "paid":
+        qs.append(S.equal("paid", True))
+    elif a.get("pay") == "unpaid":
+        qs.append(UNPAID)
+    elif a.get("pay") == "due":
+        qs += DUE
     items, _ = aw.list("issues", [*qs, S.order_desc("$createdAt")], lim=300, total=False)
     return render_template("issues.html", items=attach_issue_refs(items), cats=M.categories(), wards=M.wards())
 
@@ -114,6 +130,18 @@ def issue_update(iid):
     aw.update("issues", iid, patch)
     flash("Saved")
     return redirect(url_for("admin.issue", iid=iid))
+
+
+@admin.post("/issues/<iid>/pay")
+@login_required
+def issue_pay(iid):
+    """Mark the Rs reward for this post as paid / not paid (admin calls the resident and pays via PhonePe)."""
+    i = aw.get("issues", iid) or abort(404)
+    paid = request.form.get("paid") == "1"
+    aw.update("issues", iid, {"paid": paid, "paid_at": iso(now()) if paid else None,
+                              "pay_ref": request.form.get("pay_ref", "").strip()[:60] if paid else None})
+    flash(f"Marked {'PAID' if paid else 'NOT PAID'}")
+    return redirect(request.referrer or url_for("admin.issue", iid=iid))
 
 
 @admin.post("/comments/<cid>/delete")
@@ -285,10 +313,11 @@ def export(what):
         for r in rows:
             w.writerow([r.id, r.created_at, r.service.name, r.subject, r.details, r.status, r.user.name, r.user.phone, bool(r.user.is_verified)])
     elif what == "issues":
-        w.writerow(["id", "date", "category", "title", "location", "status", "upvotes", "comments", "name", "phone"])
+        w.writerow(["id", "date", "category", "title", "location", "status", "upvotes", "comments", "name", "phone", "reward", "paid", "paid_at", "pay_ref"])
         for i in attach_issue_refs(aw.all("issues", [S.order_asc("$createdAt")])):
             w.writerow([i.id, i.created_at, i.category.name if i.category else "", i.title, i.location, i.status,
-                        i.upvote_count or 0, i.comment_count or 0, i.user.name, i.user.phone])
+                        i.upvote_count or 0, i.comment_count or 0, i.user.name, i.user.phone,
+                        app.config["REWARD_PER_POST"], "paid" if i.paid else "not paid", i.paid_at or "", i.pay_ref or ""])
     else:
         w.writerow(["id", "joined", "name", "phone", "street", "verified", "voter_id"])
         for u in aw.all("users", [S.order_asc("$createdAt")]):

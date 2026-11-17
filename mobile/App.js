@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { Platform, SafeAreaView, StatusBar, Text, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { PanResponder, Platform, SafeAreaView, StatusBar, Text, View } from 'react-native';
 import { House, Receipt, PlusSquare, UserCircle } from 'phosphor-react-native';
 import { useFonts, AnekTelugu_800ExtraBold } from '@expo-google-fonts/anek-telugu';
 import { api, loadToken, setToken } from './src/api';
+import { useBack } from './src/useBack';
 import { Avatar, C, FadeIn, Press } from './src/ui';
 import Login from './src/screens/Login';
 import { Feed } from './src/screens/Feed';
@@ -48,6 +49,27 @@ function App() {
     })();
   }, []);
 
+  // Swipe left/right on the main area to move between Home / Services / Profile.
+  // Non-capturing, so horizontal child scrollers (category chips) and vertical lists still get their own gestures first.
+  const TABS = ['home', 'services', 'profile'];
+  const tabRef = useRef(tab);
+  tabRef.current = tab;
+  const swipe = useRef(PanResponder.create({
+    onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 24 && Math.abs(g.dx) > Math.abs(g.dy) * 1.8,
+    onPanResponderRelease: (_, g) => {
+      if (Math.abs(g.dx) < 60 && Math.abs(g.vx) < 0.4) return;
+      const i = TABS.indexOf(tabRef.current) + (g.dx < 0 ? 1 : -1);
+      if (i >= 0 && i < TABS.length) setTab(TABS[i]);
+    },
+  })).current;
+
+  // Android back: close report / post, then return to Home; only Home exits the app.
+  useBack(!!user && (reporting || !!postId || tab !== 'home'), () => {
+    if (reporting) setReporting(false);
+    else if (postId) { setPostId(null); refreshMe(); }
+    else setTab('home');
+  });
+
   if (!ready || !(fontsLoaded || fontError)) return <View style={{ flex: 1, backgroundColor: C.bg }} />;
   const top = StatusBar.currentHeight || 0;
   const shell = (children) => (
@@ -81,7 +103,9 @@ function App() {
 
   return shell(
     <>
-      <FadeIn key={tab} style={{ flex: 1 }}>{body}</FadeIn>
+      <View style={{ flex: 1 }} {...swipe.panHandlers}>
+        <FadeIn key={tab} style={{ flex: 1 }}>{body}</FadeIn>
+      </View>
       {/* Instagram-style icon-only bar with a centre "+" */}
       <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: C.bg, borderTopWidth: 1, borderColor: C.line, paddingTop: 4, paddingBottom: Platform.OS === 'android' ? 30 : 12 }}>
         <Tab id="home" Icon={House} />

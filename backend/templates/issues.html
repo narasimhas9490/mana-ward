@@ -4,13 +4,17 @@
 <input name="q" placeholder="Search title" value="{{ request.args.q or '' }}">
 <select name="status"><option value="">All status</option>{% for s in ISSUE_STATUS %}<option {{ 'selected' if request.args.status==s }}>{{ s }}</option>{% endfor %}</select>
 <select name="category"><option value="">All categories</option>{% for c in cats %}<option value="{{ c.id }}" {{ 'selected' if request.args.category==c.id|string }}>{{ c.name }}</option>{% endfor %}</select>
+<select name="pay"><option value="">Any payment</option><option value="due" {{ 'selected' if request.args.pay=='due' }}>Due (payable)</option><option value="unpaid" {{ 'selected' if request.args.pay=='unpaid' }}>Not paid</option><option value="paid" {{ 'selected' if request.args.pay=='paid' }}>Paid</option></select>
 <select name="ward"><option value="">All wards</option>{% for w in wards %}<option value="{{ w.id }}" {{ 'selected' if request.args.ward==w.id|string }}>Ward {{ w.id }}</option>{% endfor %}</select>
 <button>Filter</button></form>
-<div class="wrap"><table><tr><th>#</th><th>Ward</th><th>Problem</th><th>Category</th><th>By</th><th>👍</th><th>💬</th><th>Status</th><th>Date</th></tr>
+<div class="wrap"><table><tr><th>#</th><th>Ward</th><th>Problem</th><th>Category</th><th>By</th><th>Phone</th><th>₹{{ REWARD }}</th><th>👍</th><th>💬</th><th>Status</th><th>Date</th></tr>
 {% for i in items %}<tr style="{{ 'opacity:.5' if i.hidden }}"><td>{{ i.id }}</td><td>{{ i.ward_id }}</td>
 <td><a href="{{ url_for('admin.issue',iid=i.id) }}">{{ i.title }}</a>{% if i.hidden %} <span class="pill">hidden</span>{% endif %}<br><span class="mute">{{ i.location }}</span></td>
 <td>{{ i.category.icon if i.category }} {{ i.category.name if i.category }}</td>
 <td>{{ i.user.name or i.user.phone }}{% if i.user.is_verified %} ✅{% endif %}</td>
+<td><a href="tel:{{ i.user.phone }}">{{ i.user.phone }}</a></td>
+<td><form class="inline" method="post" action="{{ url_for('admin.issue_pay',iid=i.id) }}"><input type="hidden" name="paid" value="{{ 0 if i.paid else 1 }}">
+<button class="ghost" style="padding:2px 8px" title="Click to toggle"><span class="pill {{ 'ok' if i.paid else 'open' }}">{{ 'Paid' if i.paid else 'Not paid' }}</span></button></form></td>
 <td>{{ i.upvote_count or 0 }}</td><td>{{ i.comment_count or 0 }}</td><td><span class="pill {{ i.status }}">{{ i.status }}</span></td>
-<td>{{ i.created_at.strftime('%d %b %y') }}</td></tr>{% else %}<tr><td colspan="9" class="mute">No problems</td></tr>{% endfor %}</table></div>
+<td>{{ i.created_at.strftime('%d %b %y') }}</td></tr>{% else %}<tr><td colspan="11" class="mute">No problems</td></tr>{% endfor %}</table></div>
 {% endblock %}

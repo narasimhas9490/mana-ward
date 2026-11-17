@@ -14,8 +14,7 @@
         {
           "photosPermission": "Allow photo access to attach a picture of the problem"
         }
-      ],
-      "./plugins/cleartext.js"
+      ]
     ]
   }
 }

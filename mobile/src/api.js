@@ -1,8 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Set to your computer's LAN IP while testing (phone and PC on same Wi-Fi),
-// or your deployed URL (e.g. https://my-ward.onrender.com) in production.
-export const BASE_URL = 'http://192.168.1.104:5000';
+// Deployed backend (Render free tier may take ~30-60s to wake after idle, hence the long timeout below).
+export const BASE_URL = 'https://mana-ward.onrender.com';
+
+// Free hosting sleeps when idle and can take 60s+ to wake: ping on app start so it is warm by the time the user submits.
+fetch(BASE_URL + '/api/health').catch(() => {});
 
 let token = null;
 export const setToken = async (t) => {
@@ -19,10 +21,11 @@ export async function api(path, { method = 'GET', body, form } = {}) {
   if (body) headers['Content-Type'] = 'application/json';
   let res;
   const ctl = new AbortController();
-  const timer = setTimeout(() => ctl.abort(), 12000);
+  const timer = setTimeout(() => ctl.abort(), 120000);
   try {
     res = await fetch(BASE_URL + '/api' + path, { method, headers, signal: ctl.signal, body: form || (body && JSON.stringify(body)) });
-  } catch {
+  } catch (err) {
+    if (err && err.name === 'AbortError') throw new Error('Server is waking up (free hosting). Please wait a minute and try again.');
     throw new Error('No internet / server not reachable');
   } finally {
     clearTimeout(timer);

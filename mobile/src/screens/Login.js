@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useBack } from '../useBack';
 import { Alert, KeyboardAvoidingView, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { Check, Lock, MapPin } from 'phosphor-react-native';
 import { api, setToken } from '../api';
@@ -8,6 +9,7 @@ const st = { label: { color: C.mute, fontSize: 12, fontWeight: '800', letterSpac
 
 export default function Login({ onLogin }) {
   const [step, setStep] = useState('ward'); // 1) ward  2) name + mobile  3) otp
+  useBack(step !== 'ward', () => { if (step === 'otp') { setOtp(''); setStep('details'); } else setStep('ward'); });
   const [wards, setWards] = useState([]);
   const [ward, setWard] = useState(1); // Ward 1 is pre-selected
   const [name, setName] = useState('');

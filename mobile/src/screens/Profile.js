@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useBack } from '../useBack';
 import { Alert, Dimensions, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SealCheck, IdentificationCard, ShieldCheck, SignOut, MapPin, HandHeart, ChatCircle, GridFour } from 'phosphor-react-native';
@@ -18,6 +19,7 @@ const Stat = ({ n, label }) => (
 
 export default function Profile({ user, setUser, onLogout, onOpenPost }) {
   const [editing, setEditing] = useState(false);
+  useBack(editing, () => setEditing(false));
   const [name, setName] = useState(user.name === 'Resident' ? '' : user.name);
   const [street, setStreet] = useState(user.street || '');
   const [epic, setEpic] = useState('');

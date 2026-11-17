@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useBack } from '../useBack';
 import { Alert, FlatList, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { MagnifyingGlass, Plus, X, Camera, SquaresFour } from 'phosphor-react-native';
 import { MapPin } from 'phosphor-react-native';
@@ -32,6 +33,7 @@ export function Feed({ me, onReport }) {
   const [filter, setFilter] = useState('all');
   const [q, setQ] = useState('');
   const [searching, setSearching] = useState(false);
+  useBack(searching, () => { setQ(''); setSearching(false); });
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async (pull) => {
